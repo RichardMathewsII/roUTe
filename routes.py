@@ -1,3 +1,6 @@
+"""
+This module contains functions for generating point routes to be scored in score.py
+"""
 import googlemaps
 from googlemaps import directions
 from googlemaps import client
@@ -6,26 +9,44 @@ from googlemaps import convert
 
 
 def points(pointA, pointB, num):
+    """
+    Generates intermediate points in between pointA and pointB
+    :param pointA: tuple(lat, lng)
+    :param pointB: tuple(lat, lng)
+    :param num: number of intermediate points to compute between pointA and pointB
+    :return: list of intermediate points, each point is tuple(lat, lng)
+             list of all latitude coordinates
+             list of all longitude coordinates
+    """
+    # compute latitude distance and longitude distance
     lat_distance = pointB[0] - pointA[0]
     lng_distance = pointB[1] - pointA[1]
     lats = [pointA[0]]
     lngs = [pointA[1]]
     interm_points = []
     for i in range(1, num+1):
-      lat = pointA[0] + lat_distance * (i / (num + 1))
-      lng = pointA[1] + lng_distance * (i / (num + 1))
-      interm_points.append((lat, lng))
-      lats.append(lat)
-      lngs.append(lng)
+        # compute intermediate points, add to lists
+        lat = pointA[0] + lat_distance * (i / (num + 1))
+        lng = pointA[1] + lng_distance * (i / (num + 1))
+        interm_points.append((lat, lng))
+        lats.append(lat)
+        lngs.append(lng)
     lats.append(pointB[0])
     lngs.append(pointB[1])
     return interm_points, lats, lngs
 
 
 def waypoint_generator(user_location, destination, client):
+    """
+    Generates 8 waypoints
+    :param user_location: the latitude-longitude location of the user, tuple(lat, lng)
+    :param destination: the latitude-longitude location of the destination, tuple(lat, lng)
+    :param client: client for GoogleMaps API
+    :return: list of waypoint coordinates, tuple(lat, lng)
+    """
     pointA = user_location
     pointB = destination
-    interm, _, _ = points(pointA, pointB, 3)
+    interm, _, _ = points(pointA, pointB, 3)  # get intermediate points
     slope = (pointA[0] - pointB[0]) / (pointA[1] - pointB[1])
     perp_slope = -slope ** (-1)
     distance = ((pointA[0] - pointB[0]) ** 2 + (pointA[1] - pointB[1]) ** 2) ** (0.5)
@@ -36,7 +57,7 @@ def waypoint_generator(user_location, destination, client):
     point2 = ((interm[0][0] - perp_slope * d), (interm[0][1] - d))
     point3 = ((interm[2][0] + perp_slope * d), (interm[2][1] + d))
     point4 = ((interm[2][0] - perp_slope * d), (interm[2][1] - d))
-    gm_waypoints = roads.nearest_roads(client, [point1, point2, point3, point4])
+    gm_waypoints = roads.nearest_roads(client, [point1, point2, point3, point4])  # map points to road
     # print(gm_waypoints)
     waypoints = []
     for i in range(1, 5):
@@ -50,7 +71,7 @@ def waypoint_generator(user_location, destination, client):
     point2 = ((interm[0][0] - perp_slope * d), (interm[0][1] - d))
     point3 = ((interm[2][0] + perp_slope * d), (interm[2][1] + d))
     point4 = ((interm[2][0] - perp_slope * d), (interm[2][1] - d))
-    gm_waypoints = roads.nearest_roads(client, [point1, point2, point3, point4])
+    gm_waypoints = roads.nearest_roads(client, [point1, point2, point3, point4])  # map points to road
     # print(gm_waypoints)
     for i in range(1, 5):
         lat = gm_waypoints[i]['location']['latitude']
@@ -60,18 +81,27 @@ def waypoint_generator(user_location, destination, client):
 
 
 def route_generator(user_location, destination, client):
+    """
+    Generates GoogleMaps routes
+    :param user_location: the latitude-longitude location of the user, tuple(lat, lng)
+    :param destination: the latitude-longitude location of the destination, tuple(lat, lng)
+    :param client: client for GoogleMaps API
+    :return: list of GoogleMaps routes
+    """
     pointA = user_location
     pointB = destination
     cli = client
-    wp = waypoint_generator(pointA, pointB, cli)
+    wp = waypoint_generator(pointA, pointB, cli)  # generate waypoints
     gmap_routes = []
-    route = directions.directions(cli, pointA, pointB, mode='walking', alternatives=True)
+    route = directions.directions(cli, pointA, pointB, mode='walking', alternatives=True)  # returns 3 routes
     print(len(route))
     for i in range(len(route)):
         gmap_routes.append(route[i])
     for waypoint in wp:
+        # generates a route for each waypoint
         route = directions.directions(cli, pointA, pointB, mode='walking', waypoints=waypoint)
         gmap_routes.append(route)
+    # generates routes for combinations of waypoints
     gmap_routes.append(directions.directions(cli, pointA, pointB, mode='walking', waypoints=[wp[0], wp[2]]))
     gmap_routes.append(directions.directions(cli, pointA, pointB, mode='walking', waypoints=[wp[0], wp[3]]))
     gmap_routes.append(directions.directions(cli, pointA, pointB, mode='walking', waypoints=[wp[1], wp[2]]))
@@ -80,6 +110,11 @@ def route_generator(user_location, destination, client):
 
 
 def convert_to_point_routes(map_routes):
+    """
+    Converts GoogleMaps routes to point routes (instead of nodes, it is a list of points highlighting the route)
+    :param map_routes: list of GoogleMaps routes
+    :return: list of point routes, where each point route is a dictionary of 'latitudes' and 'longitudes'
+    """
     point_routes = []
     for route in map_routes:
         lats = []

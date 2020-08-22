@@ -1,4 +1,12 @@
+"""
+Module for scoring point routes and selecting the route optimized for safety and speed.
+"""
+
+
 def extract_duration(route):
+    """
+    Pull the duration of the route from a GoogleMaps route
+    """
     duration = 0
     if type(route) is list:
         route = route[0]
@@ -8,6 +16,9 @@ def extract_duration(route):
 
 
 def average_duration(map_routes):
+    """
+    Compute the average duration of all routes
+    """
     durations = []
     for i in range(len(map_routes)):
         durations.append(extract_duration(map_routes[i]))
@@ -19,6 +30,9 @@ def average_duration(map_routes):
 
 
 def score_routes(point_routes, map_routes, subregion_weights):
+    """
+    Score each route, 90% based on safety, 10% based on time
+    """
     scores = {}
     idx = 0
     avg_duration = average_duration(map_routes)
@@ -38,6 +52,9 @@ def score_routes(point_routes, map_routes, subregion_weights):
 
 
 def safest_route(scores):
+    """
+    Selects the route with the lowest score to be safest route
+    """
     prev = (0, scores[0])
     for i in range(1, len(scores)):
         if scores[i] < prev[1]:

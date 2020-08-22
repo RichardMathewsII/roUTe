@@ -1,3 +1,9 @@
+"""
+Module for pulling data from austintexas.gov using Socrata Open data api
+"""
+from crime_data import CrimeData
+
+
 def load_data():
     socrata_token = 'xty4xwyMTY7JsNGnat7Av9sQt'
 
@@ -11,5 +17,5 @@ def load_data():
 
     api_key = 'AIzaSyDmKbjLrlWQowWVzzTy_AAWsFQO4Hdbeko'
     utcrime = CrimeData(UTregion, api_key)
-    utcrime.load(dataset_id, domain, socrata_token, 2016, 2030, 10000)
+    utcrime.load(dataset_id, domain, socrata_token, 2016, 2030, 10000)  # load data since 2016
     return utcrime

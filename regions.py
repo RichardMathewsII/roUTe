@@ -6,11 +6,11 @@ each sub-region based on its criminal activity within a specified time frame.
 
 def subregion_lats(decimal_places):
     """
-    :param decimal_places:
-    :return:
+    :param decimal_places: number of decimal places to round lat and lng to
+    :return: list of all latitude values for each subregion
     """
-    bottom = round(30.282200, decimal_places)
-    top = round(30.299402, decimal_places)
+    bottom = round(30.282200, decimal_places)  # bottom threshold
+    top = round(30.299402, decimal_places)  # top threshold
     start = str(bottom)
     start = start[3:]
     start = int(start)
@@ -20,13 +20,17 @@ def subregion_lats(decimal_places):
     lats = range(start, end+1)
     points = []
     for num in lats:
-      point = '30.' + str(num)
-      point = float(point)
-      points.append(point)
+        point = '30.' + str(num)
+        point = float(point)
+        points.append(point)
     return points
 
 
 def subregion_lngs(decimal_places):
+    """
+    :param decimal_places: number of decimal places to round lat and lng to
+    :return: list of all longitude values for each subregion
+    """
     right = round(-97.728456, decimal_places)
     left = round(-97.754840, decimal_places)
     start = str(right)
@@ -38,13 +42,18 @@ def subregion_lngs(decimal_places):
     lngs = range(start, end+1)
     points = []
     for num in lngs:
-      point = '-97.' + str(num)
-      point = float(point)
-      points.append(point)
+        point = '-97.' + str(num)
+        point = float(point)
+        points.append(point)
     return points
 
 
 def generate_subregions(initial_weight):
+    """
+    Generates all subregions in the UT Austin area
+    :param initial_weight: initialize the weight of each region to this number
+    :return: list of subregions, tuple(lat, lng)
+    """
     lats = subregion_lats(3)
     lngs = subregion_lngs(3)
     subregions = {}
@@ -57,17 +66,19 @@ def generate_subregions(initial_weight):
 
 def generate_subregion_weights(crime_data, crime_weights):
     """
+    Weights each subregion based on the severity of crime activity occurring in it
     :param crime_data: Austin crime data - type: CrimeData object
     :param crime_weights: weights for each crime classification - type: dictionary
-    :return:
+    :return: list of subregion weights to describe crime severity of each particular region
     """
     # initialize weights to zero
     subregion_weights = generate_subregions(0)
     num_of_crimes = crime_data.crime_count()
-    dataset = crime_data.df
+    dataset = crime_data.df  # get the dataframe
     dataset['latitude'] = dataset['latitude'].astype('float')
     dataset['longitude'] = dataset['longitude'].astype('float')
     for i in range(num_of_crimes):
+        # iterate over each crime and map and add its corresponding weight to the subregion it falls in
         lat = round(dataset['latitude'][i], 3)
         lng = round(dataset['longitude'][i], 3)
         subregion = (lat, lng)
